@@ -10,19 +10,21 @@ class ForumSubscriptions
 {
     private ConnectionInterface $database;
     private string $fluxBBDatabase;
+    private string $fluxBBPrefix;
 
     public function __construct(ConnectionInterface $database)
     {
         $this->database = $database;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase)
+    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
     {
         $this->fluxBBDatabase = $fluxBBDatabase;
+        $this->fluxBBPrefix = $fluxBBPrefix;
         $output->writeln('Importing forum_subscriptions...');
 
         $topicSubscriptions = $this->database
-            ->table($this->fluxBBDatabase . '.forum_subscriptions')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'forum_subscriptions')
             ->select(
                 [
                     'user_id',

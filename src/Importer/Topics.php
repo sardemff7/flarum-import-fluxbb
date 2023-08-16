@@ -11,19 +11,21 @@ class Topics
 {
     private ConnectionInterface $database;
     private string $fluxBBDatabase;
+    private string $fluxBBPrefix;
 
     public function __construct(ConnectionInterface $database)
     {
         $this->database = $database;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase)
+    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
     {
         $this->fluxBBDatabase = $fluxBBDatabase;
+        $this->fluxBBPrefix = $fluxBBPrefix;
         $output->writeln('Importing topics...');
 
         $topics = $this->database
-            ->table($this->fluxBBDatabase . '.topics')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'topics')
             ->select(
                 [
                     'id',
@@ -108,7 +110,7 @@ class Topics
     private function getUserByPost(int $postId): ?int
     {
         $post = $this->database
-            ->table($this->fluxBBDatabase . '.posts')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts')
             ->select(['poster', 'poster_id'])
             ->where('id', '=', $postId)
             ->get()
@@ -124,7 +126,7 @@ class Topics
     private function getUserByName(string $nickname): ?int
     {
         $user = $this->database
-            ->table($this->fluxBBDatabase . '.users')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'users')
             ->select(['id'])
             ->where('username', '=', $nickname)
             ->get()
@@ -136,7 +138,7 @@ class Topics
     private function getParticipantCountByTopic(int $topicId): int
     {
         $participants = $this->database
-            ->table($this->fluxBBDatabase . '.posts')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts')
             ->select('poster')
             ->where('topic_id', '=', $topicId)
             ->groupBy('poster')
@@ -148,7 +150,7 @@ class Topics
     private function getParentTagId(int $tagId): int
     {
         $user = $this->database
-            ->table($this->fluxBBDatabase . '.forums')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'forums')
             ->select(['cat_id'])
             ->where('id', '=', $tagId)
             ->get()

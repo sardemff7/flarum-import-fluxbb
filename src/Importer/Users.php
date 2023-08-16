@@ -11,19 +11,21 @@ class Users
 {
     private ConnectionInterface $database;
     private string $fluxBBDatabase;
+    private string $fluxBBPrefix;
 
     public function __construct(ConnectionInterface $database)
     {
         $this->database = $database;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase)
+    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
     {
         $this->fluxBBDatabase = $fluxBBDatabase;
+        $this->fluxBBPrefix = $fluxBBPrefix;
         $output->writeln('Importing users...');
 
         $users = $this->database
-            ->table($this->fluxBBDatabase . '.users')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'users')
             ->select(
                 [
                     'id',
@@ -186,10 +188,10 @@ class Users
     private function getDiscussionCount(int $userId): int
     {
         $topics = $this->database
-            ->table($this->fluxBBDatabase . '.topics')
-            ->join($this->fluxBBDatabase . '.posts', 'topics.first_post_id', '=', 'posts.id')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'topics')
+            ->join($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts', $this->fluxBBPrefix . 'topics.first_post_id', '=', $this->fluxBBPrefix . 'posts.id')
             ->select('topic_id')
-            ->where('posts.poster_id', '=', $userId)
+            ->where($this->fluxBBPrefix . 'posts.poster_id', '=', $userId)
             ->get()
             ->all();
         return count($topics);
@@ -198,7 +200,7 @@ class Users
     private function getCommentCount(int $userId): int
     {
         $posts = $this->database
-            ->table($this->fluxBBDatabase . '.posts')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts')
             ->select('id')
             ->where('poster_id', '=', $userId)
             ->get()

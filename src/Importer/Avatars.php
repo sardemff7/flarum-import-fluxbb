@@ -15,6 +15,7 @@ class Avatars
     private ConnectionInterface $database;
     private string $fluxBBDatabase;
     private string $avatarsDir;
+    private string $fluxBBPrefix;
     private ContainerInterface $container;
 
     public function __construct(ConnectionInterface $database, ContainerInterface $container)
@@ -23,14 +24,15 @@ class Avatars
         $this->container = $container;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase, string $avatarsDir)
+    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix, string $avatarsDir)
     {
         $this->fluxBBDatabase = $fluxBBDatabase;
         $this->avatarsDir = $avatarsDir;
+        $this->fluxBBPrefix = $fluxBBPrefix;
         $output->writeln('Importing avatars...');
 
         $users = $this->database
-            ->table($this->fluxBBDatabase . '.users')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'users')
             ->select(['id'])
             ->where('username', '!=', 'Guest')
             ->orderBy('id')

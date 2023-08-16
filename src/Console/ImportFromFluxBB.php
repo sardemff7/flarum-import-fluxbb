@@ -83,6 +83,7 @@ class ImportFromFluxBB extends AbstractCommand
             ->setName('app:import-from-fluxbb')
             ->setDescription('Import from FluxBB')
             ->addArgument('fluxbb-database', InputArgument::OPTIONAL, '', 'fluxbb')
+            ->addArgument('fluxbb-prefix', InputArgument::OPTIONAL, '', 'fluxbb_')
             ->addArgument('avatars-dir', InputArgument::OPTIONAL, '', '/fluxbb-avatars');
     }
 
@@ -110,21 +111,22 @@ class ImportFromFluxBB extends AbstractCommand
         ini_set('memory_limit', '16G');
 
         $this->initialCleanup->execute($this->output);
-        $this->users->execute($this->output, $this->input->getArgument('fluxbb-database'));
+        $this->users->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
         $this->avatars->execute(
             $this->output,
             $this->input->getArgument('fluxbb-database'),
+            $this->input->getArgument('fluxbb-prefix'),
             $this->input->getArgument('avatars-dir')
         );
-        $this->categories->execute($this->output, $this->input->getArgument('fluxbb-database'));
-        $this->forums->execute($this->output, $this->input->getArgument('fluxbb-database'));
-        $this->topics->execute($this->output, $this->input->getArgument('fluxbb-database'));
-        $this->posts->execute($this->output, $this->input->getArgument('fluxbb-database'));
-        $this->topicSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'));
-        $this->forumSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'));
-        $this->groups->execute($this->output, $this->input->getArgument('fluxbb-database'));
-        $this->bans->execute($this->output, $this->input->getArgument('fluxbb-database'));
-        $this->reports->execute($this->output, $this->input->getArgument('fluxbb-database'));
+        $this->categories->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        $this->forums->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        $this->topics->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        $this->posts->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        $this->topicSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        $this->forumSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        $this->groups->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        $this->bans->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        $this->reports->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
         $this->postMentionsUser->execute($this->output);
 
         $this->validation->execute($this->output);

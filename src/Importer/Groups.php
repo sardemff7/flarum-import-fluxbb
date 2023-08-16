@@ -10,15 +10,17 @@ class Groups
 {
     private ConnectionInterface $database;
     private string $fluxBBDatabase;
+    private string $fluxBBPrefix;
 
     public function __construct(ConnectionInterface $database)
     {
         $this->database = $database;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase)
+    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
     {
         $this->fluxBBDatabase = $fluxBBDatabase;
+        $this->fluxBBPrefix = $fluxBBPrefix;
         $this->importGroups($output);
         $this->importUserGroup($output);
     }
@@ -28,7 +30,7 @@ class Groups
         $output->writeln('Importing groups...');
 
         $groups = $this->database
-            ->table($this->fluxBBDatabase . '.groups')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'groups')
             ->select(
                 [
                     'g_id',
@@ -97,7 +99,7 @@ class Groups
         $output->writeln('Importing user.group_id...');
 
         $users = $this->database
-            ->table($this->fluxBBDatabase . '.users')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'users')
             ->select(
                 [
                     'id',
@@ -166,7 +168,7 @@ class Groups
     private function importGroupPermissions(int $oldGroupId): void
     {
         $forumPermissions = $this->database
-            ->table($this->fluxBBDatabase . '.forum_perms')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'forum_perms')
             ->select(
                 [
                     'group_id',

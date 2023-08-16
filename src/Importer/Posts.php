@@ -22,6 +22,7 @@ class Posts
     private Formatter $importFormatter;
     protected Container $container;
     private string $fluxBBDatabase;
+    private string $fluxBBPrefix;
 
     public function __construct(ConnectionInterface $database, Container $container)
     {
@@ -29,15 +30,16 @@ class Posts
         $this->container = $container;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase)
+    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
     {
         $this->fluxBBDatabase = $fluxBBDatabase;
+        $this->fluxBBPrefix = $fluxBBPrefix;
         $this->importFormatter = $this->createFormater();
 
         $output->writeln('Importing posts...');
 
         $posts = $this->database
-            ->table($this->fluxBBDatabase . '.posts')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts')
             ->select(
                 [
                     'id',
@@ -100,7 +102,7 @@ class Posts
     private function getUserByName(string $nickname): ?int
     {
         $user = $this->database
-            ->table($this->fluxBBDatabase . '.users')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'users')
             ->select(['id'])
             ->where('username', '=', $nickname)
             ->get()

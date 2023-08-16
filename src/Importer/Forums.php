@@ -11,19 +11,21 @@ class Forums
 {
     private ConnectionInterface $database;
     private string $fluxBBDatabase;
+    private string $fluxBBPrefix;
 
     public function __construct(ConnectionInterface $database)
     {
         $this->database = $database;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase)
+    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
     {
         $this->fluxBBDatabase = $fluxBBDatabase;
+        $this->fluxBBPrefix = $fluxBBPrefix;
         $output->writeln('Importing forums...');
 
         $forums = $this->database
-            ->table($this->fluxBBDatabase . '.forums')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'forums')
             ->select(
                 [
                     'id',
@@ -77,7 +79,7 @@ class Forums
     private function getLastTopicId(int $lastPostId): ?int
     {
         $topic = $this->database
-            ->table($this->fluxBBDatabase . '.posts')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts')
             ->select(['topic_id'])
             ->where('id', '=', $lastPostId)
             ->get()
@@ -89,7 +91,7 @@ class Forums
     private function getLastPostUserId(int $lastPostId): ?int
     {
         $topic = $this->database
-            ->table($this->fluxBBDatabase . '.posts')
+            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts')
             ->select(['poster_id'])
             ->where('id', '=', $lastPostId)
             ->where('poster_id', '!=', 1)
