@@ -12,5 +12,5 @@ composer require archlinux-de/flarum-import-fluxbb
 ### Usage
 
 ```sh
-./flarum app:import-from-fluxbb  [<fluxbb-database> [<avatars-dir>]]
+./flarum app:import-from-fluxbb  [<fluxbb-database> [<fluxbb-prefix>] [<avatars-dir>]]
 ```
