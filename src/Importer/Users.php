@@ -71,7 +71,6 @@ class Users
             ->orderBy('id')
             ->get()
             ->all();
-        $output->writeln('utenti: ' . count($users));
 
         $progressBar = new ProgressBar($output, count($users));
 
