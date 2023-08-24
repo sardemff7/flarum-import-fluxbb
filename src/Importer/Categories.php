@@ -41,7 +41,7 @@ class Categories
                 ->table('tags')
                 ->insert(
                     [
-                        'id' => $category->id,
+                        'id' => $category->id + 50, // Suggested fix from Ilaumgui https://discuss.flarum.org/d/3867-fluxbb-to-flarum-migration-tool/11
                         'name' => $category->cat_name,
                         'slug' => Str::slug(preg_replace('/\.+/', '-', $category->cat_name), '-', 'de'),
                         'position' => $category->disp_position,
