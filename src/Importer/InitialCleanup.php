@@ -23,14 +23,19 @@ class InitialCleanup
         $output->writeln('Initial cleanup...');
 
         $this->database->statement('SET FOREIGN_KEY_CHECKS=0');
-        $this->database->table('groups')->truncate();
-        $this->database->table('group_user')->truncate();
-        $this->database->table('tags')->truncate();
         $this->database->table('users')->truncate();
-        $this->database->statement('SET FOREIGN_KEY_CHECKS=1');
-
         foreach (glob($this->container[Paths::class]->public . '/assets/avatars/*.*') as $avatar) {
             unlink($avatar);
         }
+        $this->database->table('groups')->truncate();
+        $this->database->table('group_user')->truncate();
+
+        $this->database->table('tags')->truncate();
+        $this->database->table('discussions')->truncate();
+        $this->database->table('discussion_tag')->truncate();
+        $this->database->table('posts')->truncate();
+
+        $this->database->statement('SET FOREIGN_KEY_CHECKS=1');
+
     }
 }

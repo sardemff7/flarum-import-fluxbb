@@ -88,13 +88,12 @@ class ImportFromFluxBB extends AbstractCommand
             ->setName('app:import-from-fluxbb')
             ->setDescription('Import from FluxBB')
             ->addArgument('fluxbb-dir', InputArgument::OPTIONAL, '', 'fluxbb');
-            // ->addArgument('avatars-dir', InputArgument::OPTIONAL, '', '/fluxbb-avatars');
     }
 
     protected function fire()
     {
         $this->checkRequiredExtension();
-        // ini_set('memory_limit', '16G'); // Not sure it is needed
+        ini_set('memory_limit', '16G');
 
         // Load second database connection, the FluxBB Database
         $this->getFluxBBDBConnection($this->input->getArgument('fluxbb-dir'));
@@ -103,17 +102,28 @@ class ImportFromFluxBB extends AbstractCommand
         // Clean Flarum DB and avatars
         $this->initialCleanup->execute($this->output);
 
-        // Import users AND Avatars
+        // Import users, groups AND Avatars
         $this->users->execute($this->output);
         $this->avatars->execute($this->output, $this->avatarsDir);
+        $this->groups->execute($this->output);
 
+        // Start import the Forum
         $this->categories->execute($this->output);
         $this->forums->execute($this->output);
         $this->topics->execute($this->output);
-        // $this->posts->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+
+        /**
+         * TODO controllare CommentPost
+         *
+        $this->DBmanager->connection()->statement('SET FOREIGN_KEY_CHECKS=0');
+        $this->DBmanager->table('posts')->truncate();
+        $this->DBmanager->connection()->statement('SET FOREIGN_KEY_CHECKS=1');
+        $this->posts->execute($this->output);
+         */
+
         // $this->topicSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
         // $this->forumSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        // $this->groups->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+
         // $this->bans->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
         // $this->reports->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
         // $this->postMentionsUser->execute($this->output);

@@ -2,25 +2,21 @@
 
 namespace ArchLinux\ImportFluxBB\Importer;
 
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Capsule\Manager;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Groups
 {
-    private ConnectionInterface $database;
-    private string $fluxBBDatabase;
-    private string $fluxBBPrefix;
+    private Manager $database;
 
-    public function __construct(ConnectionInterface $database)
+    public function __construct(Manager $database)
     {
         $this->database = $database;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
+    public function execute(OutputInterface $output)
     {
-        $this->fluxBBDatabase = $fluxBBDatabase;
-        $this->fluxBBPrefix = $fluxBBPrefix;
         $this->importGroups($output);
         $this->importUserGroup($output);
     }
@@ -29,8 +25,8 @@ class Groups
     {
         $output->writeln('Importing groups...');
 
-        $groups = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'groups')
+        $groups = $this->database->connection('fluxbb')
+            ->table('groups')
             ->select(
                 [
                     'g_id',
@@ -98,8 +94,8 @@ class Groups
     {
         $output->writeln('Importing user.group_id...');
 
-        $users = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'users')
+        $users = $this->database->connection('fluxbb')
+            ->table('users')
             ->select(
                 [
                     'id',
@@ -167,8 +163,8 @@ class Groups
 
     private function importGroupPermissions(int $oldGroupId): void
     {
-        $forumPermissions = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'forum_perms')
+        $forumPermissions = $this->database->connection('fluxbb')
+            ->table('forum_perms')
             ->select(
                 [
                     'group_id',

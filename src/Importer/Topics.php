@@ -10,8 +10,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 class Topics
 {
     private Manager $database;
-    private string $fluxBBDatabase;
-    private string $fluxBBPrefix;
 
     public function __construct(Manager $database)
     {
