@@ -87,7 +87,7 @@ class Users
                         'is_email_confirmed' => $user->group_id == 0 ? 0 : 1,
                         'password' => '', // password will be migrated by migratetoflarum/old-passwords
                         'preferences' => $this->createPreferences($user),
-                        'joined_at' => (new \DateTime())->setTimestamp($user->registered),
+                        'joined_at' => (new \DateTime())->setTimestamp($user->registered ?? ''),
                         'last_seen_at' => $lastSeenAt,
                         'marked_all_as_read_at' => $lastSeenAt,
                         'read_notifications_at' => null,
