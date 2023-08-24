@@ -39,6 +39,7 @@ class ImportFromFluxBB extends AbstractCommand
     private Validation $validation;
     private ExtensionManager $extensionManager;
     private Manager $DBmanager;
+    protected String $avatarsDir;
 
     public function __construct(
         Users $users,
@@ -97,19 +98,15 @@ class ImportFromFluxBB extends AbstractCommand
 
         // Load second database connection, the FluxBB Database
         $this->getFluxBBDBConnection($this->input->getArgument('fluxbb-dir'));
+        $this->checkFluxBBAvatarDir($this->input->getArgument('fluxbb-dir'));
 
         // Clean Flarum DB and avatars
         $this->initialCleanup->execute($this->output);
 
-        // Import users
+        // Import users AND Avatars
         $this->users->execute($this->output);
+        $this->avatars->execute($this->output, $this->avatarsDir);
 
-        // $this->avatars->execute(
-            // $this->output,
-            // $this->input->getArgument('fluxbb-database'),
-            // $this->input->getArgument('fluxbb-prefix'),
-            // $this->input->getArgument('avatars-dir')
-        // );
         // $this->categories->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
         // $this->forums->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
         // $this->topics->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
@@ -164,5 +161,13 @@ class ImportFromFluxBB extends AbstractCommand
             $this->error($fluxBBDIR . 'config.php do not exist.');
             exit;
         };
+    }
+
+    protected function checkFluxBBAvatarDir($fluxBBDIR) {
+        $this->avatarsDir = $fluxBBDIR . 'img/avatars/';
+        if(!is_dir($this->avatarsDir)) {
+            $this->error($this->avatarsDir . ' : not exist or is not a directory. Please check.');
+            exit;
+        }
     }
 }

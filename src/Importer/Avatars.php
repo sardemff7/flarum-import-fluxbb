@@ -3,7 +3,7 @@
 namespace ArchLinux\ImportFluxBB\Importer;
 
 use Flarum\Foundation\Paths;
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Capsule\Manager;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManagerStatic as Image;
 use Psr\Container\ContainerInterface;
@@ -12,29 +12,26 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class Avatars
 {
-    private ConnectionInterface $database;
-    private string $fluxBBDatabase;
-    private string $avatarsDir;
-    private string $fluxBBPrefix;
+    private Manager $database;
     private ContainerInterface $container;
+    private String $avatarsDir;
 
-    public function __construct(ConnectionInterface $database, ContainerInterface $container)
+    public function __construct(Manager $database, ContainerInterface $container)
     {
         $this->database = $database;
         $this->container = $container;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix, string $avatarsDir)
+    public function execute(OutputInterface $output, $avatarsDir)
     {
-        $this->fluxBBDatabase = $fluxBBDatabase;
         $this->avatarsDir = $avatarsDir;
-        $this->fluxBBPrefix = $fluxBBPrefix;
         $output->writeln('Importing avatars...');
 
-        $users = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'users')
+        $users = $this->database->connection('fluxbb')
+            ->table('users')
             ->select(['id'])
             ->where('username', '!=', 'Guest')
+            ->where('group_id', '>', 0)
             ->orderBy('id')
             ->get()
             ->all();
@@ -59,7 +56,7 @@ class Avatars
      */
     private function createAvatarUrl(int $userId): ?string
     {
-        $avatarFile = glob($this->avatarsDir . '/' . $userId . '.*');
+        $avatarFile = glob($this->avatarsDir . $userId . '.*');
         if (!$avatarFile) {
             return null;
         }
