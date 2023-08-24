@@ -108,8 +108,7 @@ class ImportFromFluxBB extends AbstractCommand
         $this->avatars->execute($this->output, $this->avatarsDir);
 
         $this->categories->execute($this->output);
-        // $this->categories->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        // $this->forums->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        $this->forums->execute($this->output);
         // $this->topics->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
         // $this->posts->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
         // $this->topicSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
