@@ -2,30 +2,28 @@
 
 namespace ArchLinux\ImportFluxBB\Importer;
 
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Capsule\Manager;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Topics
 {
-    private ConnectionInterface $database;
+    private Manager $database;
     private string $fluxBBDatabase;
     private string $fluxBBPrefix;
 
-    public function __construct(ConnectionInterface $database)
+    public function __construct(Manager $database)
     {
         $this->database = $database;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
+    public function execute(OutputInterface $output)
     {
-        $this->fluxBBDatabase = $fluxBBDatabase;
-        $this->fluxBBPrefix = $fluxBBPrefix;
         $output->writeln('Importing topics...');
 
-        $topics = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'topics')
+        $topics = $this->database->connection('fluxbb')
+            ->table('topics')
             ->select(
                 [
                     'id',
@@ -51,7 +49,7 @@ class Topics
 
         $progressBar = new ProgressBar($output, count($topics));
 
-        $this->database->statement('SET FOREIGN_KEY_CHECKS=0');
+        $this->database->connection()->statement('SET FOREIGN_KEY_CHECKS=0');
         $solvedTagId = $this->createSolvedTag();
 
         foreach ($topics as $topic) {
@@ -101,7 +99,7 @@ class Topics
 
             $progressBar->advance();
         }
-        $this->database->statement('SET FOREIGN_KEY_CHECKS=1');
+        $this->database->connection()->statement('SET FOREIGN_KEY_CHECKS=1');
         $progressBar->finish();
 
         $output->writeln('');
@@ -109,8 +107,8 @@ class Topics
 
     private function getUserByPost(int $postId): ?int
     {
-        $post = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts')
+        $post = $this->database->connection('fluxbb')
+            ->table('posts')
             ->select(['poster', 'poster_id'])
             ->where('id', '=', $postId)
             ->get()
@@ -125,8 +123,8 @@ class Topics
 
     private function getUserByName(string $nickname): ?int
     {
-        $user = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'users')
+        $user = $this->database->connection('fluxbb')
+            ->table('users')
             ->select(['id'])
             ->where('username', '=', $nickname)
             ->get()
@@ -137,8 +135,8 @@ class Topics
 
     private function getParticipantCountByTopic(int $topicId): int
     {
-        $participants = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts')
+        $participants = $this->database->connection('fluxbb')
+            ->table('posts')
             ->select('poster')
             ->where('topic_id', '=', $topicId)
             ->groupBy('poster')
@@ -149,14 +147,14 @@ class Topics
 
     private function getParentTagId(int $tagId): int
     {
-        $user = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'forums')
+        $user = $this->database->connection('fluxbb')
+            ->table('forums')
             ->select(['cat_id'])
             ->where('id', '=', $tagId)
             ->get()
             ->first();
 
-        return $user->cat_id;
+        return $user->cat_id + 50;  // Suggested Fix https://discuss.flarum.org/d/3867-fluxbb-to-flarum-migration-tool/11
     }
 
     private function createSolvedTag(): int
