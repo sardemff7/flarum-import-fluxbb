@@ -2,30 +2,28 @@
 
 namespace ArchLinux\ImportFluxBB\Importer;
 
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Capsule\Manager;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Users
 {
-    private ConnectionInterface $database;
+    private Manager $database;
     private string $fluxBBDatabase;
     private string $fluxBBPrefix;
 
-    public function __construct(ConnectionInterface $database)
+    public function __construct(Manager $database)
     {
         $this->database = $database;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
+    public function execute(OutputInterface $output)
     {
-        $this->fluxBBDatabase = $fluxBBDatabase;
-        $this->fluxBBPrefix = $fluxBBPrefix;
         $output->writeln('Importing users...');
 
-        $users = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'users')
+        $users = $this->database->connection('fluxbb')
+            ->table('users')
             ->select(
                 [
                     'id',
@@ -69,9 +67,11 @@ class Users
                 ]
             )
             ->where('username', '!=', 'Guest')
+            ->where('group_id', '>', 0) // Import only activated users
             ->orderBy('id')
             ->get()
             ->all();
+        $output->writeln('utenti: ' . count($users));
 
         $progressBar = new ProgressBar($output, count($users));
 
@@ -187,11 +187,11 @@ class Users
 
     private function getDiscussionCount(int $userId): int
     {
-        $topics = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'topics')
-            ->join($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts', $this->fluxBBPrefix . 'topics.first_post_id', '=', $this->fluxBBPrefix . 'posts.id')
+        $topics = $this->database->connection('fluxbb')
+            ->table('topics')
+            ->join('posts', 'topics.first_post_id', '=', 'posts.id')
             ->select('topic_id')
-            ->where($this->fluxBBPrefix . 'posts.poster_id', '=', $userId)
+            ->where('posts.poster_id', '=', $userId)
             ->get()
             ->all();
         return count($topics);
@@ -199,8 +199,8 @@ class Users
 
     private function getCommentCount(int $userId): int
     {
-        $posts = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts')
+        $posts = $this->database->connection('fluxbb')
+            ->table('posts')
             ->select('id')
             ->where('poster_id', '=', $userId)
             ->get()

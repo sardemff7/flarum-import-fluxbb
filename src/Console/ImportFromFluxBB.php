@@ -19,6 +19,7 @@ use ArchLinux\ImportFluxBB\Importer\Validation;
 use Flarum\Console\AbstractCommand;
 use Flarum\Extension\ExtensionManager;
 use Symfony\Component\Console\Input\InputArgument;
+use Illuminate\Database\Capsule\Manager;
 
 class ImportFromFluxBB extends AbstractCommand
 {
@@ -37,6 +38,7 @@ class ImportFromFluxBB extends AbstractCommand
     private InitialCleanup $initialCleanup;
     private Validation $validation;
     private ExtensionManager $extensionManager;
+    private Manager $DBmanager;
 
     public function __construct(
         Users $users,
@@ -53,7 +55,8 @@ class ImportFromFluxBB extends AbstractCommand
         PostMentionsUser $postMentionsUser,
         InitialCleanup $initialCleanup,
         Validation $validation,
-        ExtensionManager $extensionManager
+        ExtensionManager $extensionManager,
+        Manager $DBmanager
     ) {
         $this->users = $users;
         $this->categories = $categories;
@@ -70,6 +73,7 @@ class ImportFromFluxBB extends AbstractCommand
         $this->initialCleanup = $initialCleanup;
         $this->validation = $validation;
         $this->extensionManager = $extensionManager;
+        $this->DBmanager = $DBmanager;
         parent::__construct();
     }
 
@@ -82,13 +86,45 @@ class ImportFromFluxBB extends AbstractCommand
         $this
             ->setName('app:import-from-fluxbb')
             ->setDescription('Import from FluxBB')
-            ->addArgument('fluxbb-database', InputArgument::OPTIONAL, '', 'fluxbb')
-            ->addArgument('fluxbb-prefix', InputArgument::OPTIONAL, '', 'fluxbb_')
-            ->addArgument('avatars-dir', InputArgument::OPTIONAL, '', '/fluxbb-avatars');
+            ->addArgument('fluxbb-dir', InputArgument::OPTIONAL, '', 'fluxbb');
+            // ->addArgument('avatars-dir', InputArgument::OPTIONAL, '', '/fluxbb-avatars');
     }
 
     protected function fire()
     {
+        $this->checkRequiredExtension();
+        // ini_set('memory_limit', '16G'); // Not sure it is needed
+
+        // Load second database connection, the FluxBB Database
+        $this->getFluxBBDBConnection($this->input->getArgument('fluxbb-dir'));
+
+        // Clean Flarum DB and avatars
+        $this->initialCleanup->execute($this->output);
+
+        // Import users
+        $this->users->execute($this->output);
+
+        // $this->avatars->execute(
+            // $this->output,
+            // $this->input->getArgument('fluxbb-database'),
+            // $this->input->getArgument('fluxbb-prefix'),
+            // $this->input->getArgument('avatars-dir')
+        // );
+        // $this->categories->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        // $this->forums->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        // $this->topics->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        // $this->posts->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        // $this->topicSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        // $this->forumSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        // $this->groups->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        // $this->bans->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        // $this->reports->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
+        // $this->postMentionsUser->execute($this->output);
+//
+        // $this->validation->execute($this->output);
+    }
+
+    protected function checkRequiredExtension() {
         $requiredExtensions = [
             'flarum-bbcode',
             'flarum-emoji',
@@ -104,31 +140,29 @@ class ImportFromFluxBB extends AbstractCommand
         foreach ($requiredExtensions as $requiredExtension) {
             if (!$this->extensionManager->isEnabled($requiredExtension)) {
                 $this->error($requiredExtension . ' extension needs to be enabled');
-                return;
+                exit;
             }
         }
+    }
 
-        ini_set('memory_limit', '16G');
+    protected function getFluxBBDBConnection($fluxBBDIR) {
+        if(file_exists($fluxBBDIR . 'config.php')) {
+            include($fluxBBDIR . 'config.php');
 
-        $this->initialCleanup->execute($this->output);
-        $this->users->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        $this->avatars->execute(
-            $this->output,
-            $this->input->getArgument('fluxbb-database'),
-            $this->input->getArgument('fluxbb-prefix'),
-            $this->input->getArgument('avatars-dir')
-        );
-        $this->categories->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        $this->forums->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        $this->topics->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        $this->posts->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        $this->topicSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        $this->forumSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        $this->groups->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        $this->bans->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        $this->reports->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        $this->postMentionsUser->execute($this->output);
-
-        $this->validation->execute($this->output);
+            $this->DBmanager->addConnection([
+                'driver' => 'mysql',
+                'host' => $db_host,
+                'port' => '3306',
+                'database' => $db_name,
+                'username' => $db_username,
+                'password' => $db_password,
+                'prefix' => $db_prefix,
+                'strict' => true,
+                'engine' => null,
+            ], 'fluxbb');
+        } else {
+            $this->error($fluxBBDIR . 'config.php do not exist.');
+            exit;
+        };
     }
 }

@@ -23,10 +23,10 @@ class InitialCleanup
         $output->writeln('Initial cleanup...');
 
         $this->database->statement('SET FOREIGN_KEY_CHECKS=0');
-        $this->database->statement('TRUNCATE TABLE groups');
-        $this->database->statement('TRUNCATE TABLE group_user');
-        $this->database->statement('TRUNCATE TABLE tags');
-        $this->database->statement('TRUNCATE TABLE users');
+        $this->database->table('groups')->truncate();
+        $this->database->table('group_user')->truncate();
+        $this->database->table('tags')->truncate();
+        $this->database->table('users')->truncate();
         $this->database->statement('SET FOREIGN_KEY_CHECKS=1');
 
         foreach (glob($this->container[Paths::class]->public . '/assets/avatars/*.*') as $avatar) {
