@@ -2,30 +2,26 @@
 
 namespace ArchLinux\ImportFluxBB\Importer;
 
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Capsule\Manager;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Categories
 {
-    private ConnectionInterface $database;
-    private string $fluxBBDatabase;
-    private string $fluxBBPrefix;
+    private Manager $database;
 
-    public function __construct(ConnectionInterface $database)
+    public function __construct(Manager $database)
     {
         $this->database = $database;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
+    public function execute(OutputInterface $output)
     {
-        $this->fluxBBDatabase = $fluxBBDatabase;
-        $this->fluxBBPrefix = $fluxBBPrefix;
         $output->writeln('Importing categories...');
 
-        $categories = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'categories')
+        $categories = $this->database->connection('fluxbb')
+            ->table('categories')
             ->select(
                 [
                     'id',
@@ -39,7 +35,7 @@ class Categories
 
         $progressBar = new ProgressBar($output, count($categories));
 
-        $this->database->statement('SET FOREIGN_KEY_CHECKS=0');
+        $this->database->connection()->statement('SET FOREIGN_KEY_CHECKS=0');
         foreach ($categories as $category) {
             $this->database
                 ->table('tags')
@@ -58,7 +54,7 @@ class Categories
                 );
             $progressBar->advance();
         }
-        $this->database->statement('SET FOREIGN_KEY_CHECKS=1');
+        $this->database->connection()->statement('SET FOREIGN_KEY_CHECKS=1');
         $progressBar->finish();
 
         $output->writeln('');
@@ -66,8 +62,8 @@ class Categories
 
     private function getNumberOfTopics(int $categoryId): int
     {
-        return $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'forums')
+        return $this->database->connection('fluxbb')
+            ->table('forums')
             ->selectRaw('SUM(num_topics) AS total_topics')
             ->where('cat_id', '=', $categoryId)
             ->get()
@@ -77,8 +73,8 @@ class Categories
 
     private function getLastPostId(int $categoryId): int
     {
-        return $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'forums')
+        return $this->database->connection('fluxbb')
+            ->table('forums')
             ->select(['last_post_id'])
             ->where('cat_id', '=', $categoryId)
             ->orderBy('last_post', 'DESC')
@@ -89,8 +85,8 @@ class Categories
 
     private function getLastPostedAt(int $categoryId): int
     {
-        return $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'forums')
+        return $this->database->connection('fluxbb')
+            ->table('forums')
             ->select(['last_post'])
             ->where('cat_id', '=', $categoryId)
             ->orderBy('last_post', 'DESC')
@@ -103,8 +99,8 @@ class Categories
     {
         $lastPostId = $this->getLastPostId($categoryId);
 
-        return $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts')
+        return $this->database->connection('fluxbb')
+            ->table('posts')
             ->select(['topic_id'])
             ->where('id', '=', $lastPostId)
             ->get()
@@ -116,8 +112,8 @@ class Categories
     {
         $lastPostId = $this->getLastPostId($categoryId);
 
-        $topic = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts')
+        $topic = $this->database->connection('fluxbb')
+            ->table('posts')
             ->select(['poster_id'])
             ->where('id', '=', $lastPostId)
             ->where('poster_id', '!=', 1)
