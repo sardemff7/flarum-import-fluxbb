@@ -111,16 +111,11 @@ class ImportFromFluxBB extends AbstractCommand
         $this->categories->execute($this->output);
         $this->forums->execute($this->output);
         $this->topics->execute($this->output);
-
-        /**
-         * TODO controllare CommentPost
-         *
-        $this->DBmanager->connection()->statement('SET FOREIGN_KEY_CHECKS=0');
-        $this->DBmanager->table('posts')->truncate();
-        $this->DBmanager->connection()->statement('SET FOREIGN_KEY_CHECKS=1');
         $this->posts->execute($this->output);
-         */
 
+        //
+        // TODO review and update
+        //
         // $this->topicSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
         // $this->forumSubscriptions->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
 

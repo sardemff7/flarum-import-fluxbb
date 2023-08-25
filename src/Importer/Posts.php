@@ -10,7 +10,7 @@ use Flarum\Post\CommentPost;
 use Illuminate\Cache\FileStore;
 use Illuminate\Cache\Repository;
 use Illuminate\Contracts\Container\Container;
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Capsule\Manager;
 use Illuminate\Filesystem\Filesystem;
 use s9e\TextFormatter\Configurator;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -18,28 +18,24 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class Posts
 {
-    private ConnectionInterface $database;
-    private Formatter $importFormatter;
+    private Manager $database;
+    private Formatter $formatter;
     protected Container $container;
-    private string $fluxBBDatabase;
-    private string $fluxBBPrefix;
 
-    public function __construct(ConnectionInterface $database, Container $container)
+    public function __construct(Manager $database, Container $container)
     {
         $this->database = $database;
         $this->container = $container;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
+    public function execute(OutputInterface $output)
     {
-        $this->fluxBBDatabase = $fluxBBDatabase;
-        $this->fluxBBPrefix = $fluxBBPrefix;
-        $this->importFormatter = $this->createFormater();
+        $this->createFormater();
 
         $output->writeln('Importing posts...');
 
-        $posts = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'posts')
+        $posts = $this->database->connection('fluxbb')
+            ->table('posts')
             ->select(
                 [
                     'id',
@@ -62,7 +58,7 @@ class Posts
 
         $progressBar = new ProgressBar($output, count($posts));
 
-        $this->database->statement('SET FOREIGN_KEY_CHECKS=0');
+        $this->database->connection()->statement('SET FOREIGN_KEY_CHECKS=0');
         $lastTopicId = 0;
         $currentPostNumber = 0;
         foreach ($posts as $post) {
@@ -93,7 +89,7 @@ class Posts
             $lastTopicId = $post->topic_id;
             $progressBar->advance();
         }
-        $this->database->statement('SET FOREIGN_KEY_CHECKS=1');
+        $this->database->connection()->statement('SET FOREIGN_KEY_CHECKS=1');
         $progressBar->finish();
 
         $output->writeln('');
@@ -101,8 +97,8 @@ class Posts
 
     private function getUserByName(string $nickname): ?int
     {
-        $user = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'users')
+        $user = $this->database->connection('fluxbb')
+            ->table('users')
             ->select(['id'])
             ->where('username', '=', $nickname)
             ->get()
@@ -113,11 +109,12 @@ class Posts
 
     private function convertPostContent(object $post): string
     {
-        $content = $this->replaceUnsupportedBBCode($post->message);
-        return $this->importFormatter->parse(
+        $content = $this->replaceUnsupportedBBCode(mb_convert_encoding($post->message, 'ISO-8859-1'));
+        $return = $this->formatter->parse(
             $content,
             CommentPost::reply($post->topic_id, $content, $post->poster_id, $post->poster_ip)
         );
+        return $return;
     }
 
     private function replaceUnsupportedBBCode(string $text): string
@@ -130,46 +127,47 @@ class Posts
             // FluxBB uses a different syntax
             '#\[img=(.+?)\](.+?)\[/img\]#i' => '[IMG ALT=$1]$2[/IMG]',
 
-            '#<a href="thread\.php\?[^"]*thread=([0-9]+)[^"]*">\[url\].+?\[/url\]</a>#' => '[URL]https://bbs.archlinux.de/viewtopic.php?id=$1[/URL]',
-            '#<a href="thread\.php\?[^"]*thread=([0-9]+)[^"]*">(.+?)</a>#' => '[URL=https://bbs.archlinux.de/viewtopic.php?id=$1]$2[/URL]',
+            // '#<a href="thread\.php\?[^"]*thread=([0-9]+)[^"]*">\[url\].+?\[/url\]</a>#' => '[URL]https://bbs.archlinux.de/viewtopic.php?id=$1[/URL]',
+            // '#<a href="thread\.php\?[^"]*thread=([0-9]+)[^"]*">(.+?)</a>#' => '[URL=https://bbs.archlinux.de/viewtopic.php?id=$1]$2[/URL]',
+//
+            // '#<a href="showArticle\.php\?link=(.+?)">(.+?)</a>#' => '[URL=https://wiki.archlinux.de/title/$1]$2[/URL]',
+            // '#<a href="packages\.php.*?">(.+?)</a>#' => '[URL=https://www.archlinux.de/packages]$1[/URL]',
 
-            '#<a href="showArticle\.php\?link=(.+?)">(.+?)</a>#' => '[URL=https://wiki.archlinux.de/title/$1]$2[/URL]',
-            '#<a href="packages\.php.*?">(.+?)</a>#' => '[URL=https://www.archlinux.de/packages]$1[/URL]',
-
-            '#<a href="\?page=Postings;id=20;thread=([0-9]+)" class="link">(.+?)</a>#s' => '[URL=https://bbs.archlinux.de/viewtopic.php?id=$1]$2[/URL]',
+            // '#<a href="\?page=Postings;id=20;thread=([0-9]+)" class="link">(.+?)</a>#s' => '[URL=https://bbs.archlinux.de/viewtopic.php?id=$1]$2[/URL]',
 
             '#<a href="\[url\](.+?)\[/url\]"?[^>]*>.+?</a>#s' => '[URL]$1[/URL]',
 
             '#<a href="?id=20;page=GetAttachment;file=1485" rel="nofollow"><img src="?id=20;page=GetAttachmentThumb;file=1485" alt="screenshot2.png" title="screenshot2.png" class="image" /></a>#' => '[URL]$1[/URL]',
 
-            '#\[url=(http://forum\.archlinux\.de[^\]]*)\]http://www\.laber\-land\.de[^\[]*\[/url\]#' => '[URL]$1[/URL]',
+            // '#\[url=(http://forum\.archlinux\.de[^\]]*)\]http://www\.laber\-land\.de[^\[]*\[/url\]#' => '[URL]$1[/URL]',
 
             '#<a href="(.+?)">\[url\].+?\[/url\](\.\.\.)?</a>#' => '[URL]$1[/URL]',
 
             '#<a href="([^"]+)">(.+?)</a>#' => '[URL=$1]$2[/URL]',
 
 
-            '#\[topic\](.+?)\[/topic\]#i' => '[URL]https://bbs.archlinux.de/viewtopic.php?id=$1[/URL]',
-            '#\[post\](.+?)\[/post\]#i' => '[URL]https://bbs.archlinux.de/viewtopic.php?pid=$1#p$1[/URL]',
-            '#\[forum\](.+?)\[/forum\]#i' => '[URL]https://bbs.archlinux.de/viewforum.php?id=$1[/URL]',
-            '#\[user\](.+?)\[/user\]#i' => '[URL]https://bbs.archlinux.de/profile.php?id=$1[/URL]',
+            // '#\[topic\](.+?)\[/topic\]#i' => '[URL]https://bbs.archlinux.de/viewtopic.php?id=$1[/URL]',
+            // '#\[post\](.+?)\[/post\]#i' => '[URL]https://bbs.archlinux.de/viewtopic.php?pid=$1#p$1[/URL]',
+            // '#\[forum\](.+?)\[/forum\]#i' => '[URL]https://bbs.archlinux.de/viewforum.php?id=$1[/URL]',
+            // '#\[user\](.+?)\[/user\]#i' => '[URL]https://bbs.archlinux.de/profile.php?id=$1[/URL]',
 
-            '#\[topic=([0-9]+)\](.+?)\[/topic\]#i' => '[URL=https://bbs.archlinux.de/viewtopic.php?id=$1]$2[/URL]',
-            '#\[post=([0-9]+)\](.+?)\[/post\]#i' => '[URL=https://bbs.archlinux.de/viewtopic.php?pid=$1#p$]$2[/URL]',
-            '#\[forum=([0-9]+)\](.+?)\[/forum\]#i' => '[URL=https://bbs.archlinux.de/viewforum.php?id=$1]$2[/URL]',
-            '#\[user=([0-9]+)\](.+?)\[/user\]#i' => '[URL=https://bbs.archlinux.de/profile.php?id=$1]$2[/URL]'
+            // '#\[topic=([0-9]+)\](.+?)\[/topic\]#i' => '[URL=https://bbs.archlinux.de/viewtopic.php?id=$1]$2[/URL]',
+            // '#\[post=([0-9]+)\](.+?)\[/post\]#i' => '[URL=https://bbs.archlinux.de/viewtopic.php?pid=$1#p$]$2[/URL]',
+            // '#\[forum=([0-9]+)\](.+?)\[/forum\]#i' => '[URL=https://bbs.archlinux.de/viewforum.php?id=$1]$2[/URL]',
+            // '#\[user=([0-9]+)\](.+?)\[/user\]#i' => '[URL=https://bbs.archlinux.de/profile.php?id=$1]$2[/URL]'
         ];
 
         return preg_replace(array_keys($replacements), array_values($replacements), $text);
     }
 
-    protected function createFormater(): Formatter
+    protected function createFormater()
     {
-        $cacheDirectory = $this->container[Paths::class]->storage . '/tmp/import-formatter';
+        $cacheDirectory = $this->container[Paths::class]->storage . '/cache/import-formatter';
         if (!is_dir($cacheDirectory)) {
             mkdir($cacheDirectory);
         }
-        $formatter = new Formatter(new Repository(new FileStore(new Filesystem, $cacheDirectory)), $cacheDirectory);
+        $repository = new Repository(new FileStore(new Filesystem, $cacheDirectory));
+        $formatter = new Formatter( $repository, $cacheDirectory);
 
         $formatter->addConfigurationCallback(
             function (Configurator $config) {
@@ -257,8 +255,11 @@ class Posts
             }
         );
 
-        $formatter->addConfigurationCallback(ContainerUtil::wrapCallback(ConfigureMentions::class, $this->container));
+        // TODO I must to comment this line otherwise I will get:
+        // Fatal error: Uncaught TypeError: Flarum\Mentions\ConfigureMentions::addUserId(): Argument #2 ($mentions) must be of type array, null given
+        //
+        // $formatter->addConfigurationCallback(ContainerUtil::wrapCallback(ConfigureMentions::class, $this->container));
 
-        return $formatter;
+        $this->formatter = $formatter;
     }
 }
