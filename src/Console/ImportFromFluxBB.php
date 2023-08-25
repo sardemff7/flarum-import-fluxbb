@@ -98,7 +98,6 @@ class ImportFromFluxBB extends AbstractCommand
         // Load second database connection, the FluxBB Database
         $this->getFluxBBDBConnection($this->input->getArgument('fluxbb-dir'));
         $this->checkFluxBBAvatarDir($this->input->getArgument('fluxbb-dir'));
-
         // Clean Flarum DB and avatars
         $this->initialCleanup->execute($this->output);
 
@@ -111,6 +110,7 @@ class ImportFromFluxBB extends AbstractCommand
         $this->categories->execute($this->output);
         $this->forums->execute($this->output);
         $this->topics->execute($this->output);
+
         $this->posts->execute($this->output);
 
         //
@@ -161,6 +161,7 @@ class ImportFromFluxBB extends AbstractCommand
                 'prefix' => $db_prefix,
                 'strict' => true,
                 'engine' => null,
+                'charset' => 'utf8mb4',
             ], 'fluxbb');
         } else {
             $this->error($fluxBBDIR . 'config.php do not exist.');
