@@ -48,7 +48,8 @@ class Topics
         $progressBar = new ProgressBar($output, count($topics));
 
         $this->database->connection()->statement('SET FOREIGN_KEY_CHECKS=0');
-        $solvedTagId = $this->createSolvedTag();
+        // Not needed for TheRoyals.it
+        // $solvedTagId = $this->createSolvedTag();
 
         foreach ($topics as $topic) {
             $numberOfPosts = $topic->num_replies + 1;
