@@ -2,29 +2,25 @@
 
 namespace ArchLinux\ImportFluxBB\Importer;
 
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Capsule\Manager;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class TopicSubscriptions
 {
-    private ConnectionInterface $database;
-    private string $fluxBBDatabase;
-    private string $fluxBBPrefix;
+    private Manager $database;
 
-    public function __construct(ConnectionInterface $database)
+    public function __construct(Manager $database)
     {
         $this->database = $database;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
+    public function execute(OutputInterface $output)
     {
-        $this->fluxBBDatabase = $fluxBBDatabase;
-        $this->fluxBBPrefix = $fluxBBPrefix;
         $output->writeln('Importing topic_subscriptions...');
 
-        $topicSubscriptions = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'topic_subscriptions')
+        $topicSubscriptions = $this->database->connection('fluxbb')
+            ->table('topic_subscriptions')
             ->select(
                 [
                     'user_id',

@@ -245,6 +245,8 @@ class Posts
                     ':mad:' => '😡',
                     ':rolleyes:' => '🙄',
                     ':cool:' => '😎',
+                    //TODO
+                    //ADD Other emoticons?
                 ];
 
                 foreach ($emoticons as $code => $emoji) {
