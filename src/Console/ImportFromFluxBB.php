@@ -98,7 +98,6 @@ class ImportFromFluxBB extends AbstractCommand
         // Load second database connection, the FluxBB Database
         $this->getFluxBBDBConnection($this->input->getArgument('fluxbb-dir'));
         $this->checkFluxBBAvatarDir($this->input->getArgument('fluxbb-dir'));
-
         // Clean Flarum DB and avatars
         $this->initialCleanup->execute($this->output);
 
@@ -111,14 +110,14 @@ class ImportFromFluxBB extends AbstractCommand
         $this->categories->execute($this->output);
         $this->forums->execute($this->output);
         $this->topics->execute($this->output);
-
         $this->posts->execute($this->output);
+
         $this->topicSubscriptions->execute($this->output);
+        $this->forumSubscriptions->execute($this->output);
 
         //
         // TODO review and update
         //
-        // $this->forumSubscriptions->execute($this->output);
         // $this->bans->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
         // $this->reports->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
         // $this->postMentionsUser->execute($this->output);

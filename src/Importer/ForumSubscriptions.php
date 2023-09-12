@@ -2,35 +2,36 @@
 
 namespace ArchLinux\ImportFluxBB\Importer;
 
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Capsule\Manager;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class ForumSubscriptions
 {
-    private ConnectionInterface $database;
-    private string $fluxBBDatabase;
-    private string $fluxBBPrefix;
+    private Manager $database;
 
-    public function __construct(ConnectionInterface $database)
+    public function __construct(Manager $database)
     {
         $this->database = $database;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
+    public function execute(OutputInterface $output)
     {
-        $this->fluxBBDatabase = $fluxBBDatabase;
-        $this->fluxBBPrefix = $fluxBBPrefix;
         $output->writeln('Importing forum_subscriptions...');
 
-        $topicSubscriptions = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'forum_subscriptions')
+        $array_id = $this->database->table('users')->pluck('id')->toArray();
+        $array_forumid = $this->database->table('tags')->pluck('id')->toArray();
+
+        $topicSubscriptions = $this->database->connection('fluxbb')
+            ->table('forum_subscriptions')
             ->select(
                 [
                     'user_id',
                     'forum_id'
                 ]
             )
+            ->whereIn('user_id', $array_id)
+            ->whereIn('forum_id', $array_forumid)
             ->orderBy('forum_id')
             ->get()
             ->all();
