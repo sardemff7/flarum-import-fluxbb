@@ -19,6 +19,8 @@ class TopicSubscriptions
     {
         $output->writeln('Importing topic_subscriptions...');
 
+        $array_id = $this->database->table('users')->pluck('id')->toArray();
+
         $topicSubscriptions = $this->database->connection('fluxbb')
             ->table('topic_subscriptions')
             ->select(
@@ -27,6 +29,7 @@ class TopicSubscriptions
                     'topic_id'
                 ]
             )
+            ->whereIn('user_id', $array_id)
             ->orderBy('topic_id')
             ->get()
             ->all();
