@@ -37,6 +37,7 @@ class InitialCleanup
 
         $this->database->table('discussion_user')->truncate();
         $this->database->table('tag_user')->truncate();
+        $this->database->table('flags')->truncate();
 
         $this->database->statement('SET FOREIGN_KEY_CHECKS=1');
 

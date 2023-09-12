@@ -40,7 +40,7 @@ class Topics
                     'forum_id'
                 ]
             )
-            ->where('moved_to', '=', null)
+            ->whereNull('moved_to')
             ->orderBy('id')
             ->get()
             ->all();

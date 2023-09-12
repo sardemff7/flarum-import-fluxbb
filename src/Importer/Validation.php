@@ -2,14 +2,14 @@
 
 namespace ArchLinux\ImportFluxBB\Importer;
 
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Capsule\Manager;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Validation
 {
-    private ConnectionInterface $database;
+    private Manager $database;
 
-    public function __construct(ConnectionInterface $database)
+    public function __construct(Manager $database)
     {
         $this->database = $database;
     }
@@ -43,7 +43,7 @@ class Validation
             $this->database
                 ->table('discussions')
                 ->select('id')
-                ->where('user_id', 'NOT IN', '(SELECT id FROM users)')
+                ->whereNotIn('user_id', $this->database->table('users')->select('id'))
                 ->get()
                 ->count()
         );
@@ -51,7 +51,7 @@ class Validation
             $this->database
                 ->table('discussions')
                 ->select('id')
-                ->where('last_posted_user_id', 'NOT IN', '(SELECT id FROM users)')
+                ->whereNotIn('last_posted_user_id', $this->database->table('users')->select('id'))
                 ->get()
                 ->count()
         );
@@ -59,7 +59,7 @@ class Validation
             $this->database
                 ->table('discussions')
                 ->select('id')
-                ->where('first_post_id', 'NOT IN', '(SELECT id FROM posts)')
+                ->whereNotIn('first_post_id', $this->database->table('posts')->select('id'))
                 ->get()
                 ->count()
         );
@@ -67,7 +67,7 @@ class Validation
             $this->database
                 ->table('discussions')
                 ->select('id')
-                ->where('last_post_id', 'NOT IN', '(SELECT id FROM posts)')
+                ->whereNotIn('last_post_id', $this->database->table('posts')->select('id'))
                 ->get()
                 ->count()
         );
@@ -80,7 +80,7 @@ class Validation
             $this->database
                 ->table('discussion_tag')
                 ->select('discussion_id')
-                ->where('discussion_id', 'NOT IN', '(SELECT id FROM discussions)')
+                ->whereNotIn('discussion_id', $this->database->table('discussions')->select('id'))
                 ->get()
                 ->count()
         );
@@ -88,7 +88,7 @@ class Validation
             $this->database
                 ->table('discussion_tag')
                 ->select('tag_id')
-                ->where('tag_id', 'NOT IN', '(SELECT id FROM tags)')
+                ->whereNotIn('tag_id', $this->database->table('tags')->select('id'))
                 ->get()
                 ->count()
         );
@@ -101,7 +101,7 @@ class Validation
             $this->database
                 ->table('discussion_user')
                 ->select('discussion_id')
-                ->where('discussion_id', 'NOT IN', '(SELECT id FROM discussions)')
+                ->whereNotIn('discussion_id', $this->database->table('discussions')->select('id'))
                 ->get()
                 ->count()
         );
@@ -109,7 +109,7 @@ class Validation
             $this->database
                 ->table('discussion_user')
                 ->select('user_id')
-                ->where('user_id', 'NOT IN', '(SELECT id FROM users)')
+                ->whereNotIn('user_id', $this->database->table('users')->select('id'))
                 ->get()
                 ->count()
         );
@@ -122,7 +122,7 @@ class Validation
             $this->database
                 ->table('group_permission')
                 ->select('group_id')
-                ->where('group_id', 'NOT IN', '(SELECT id FROM groups)')
+                ->whereNotIn('group_id', $this->database->table('groups')->select('id'))
                 ->get()
                 ->count()
         );
@@ -135,7 +135,7 @@ class Validation
             $this->database
                 ->table('group_user')
                 ->select('group_id')
-                ->where('group_id', 'NOT IN', '(SELECT id FROM groups)')
+                ->whereNotIn('group_id', $this->database->table('groups')->select('id'))
                 ->get()
                 ->count()
         );
@@ -143,7 +143,7 @@ class Validation
             $this->database
                 ->table('group_user')
                 ->select('user_id')
-                ->where('user_id', 'NOT IN', '(SELECT id FROM users)')
+                ->whereNotIn('user_id', $this->database->table('users')->select('id'))
                 ->get()
                 ->count()
         );
@@ -156,7 +156,7 @@ class Validation
             $this->database
                 ->table('posts')
                 ->select('discussion_id')
-                ->where('discussion_id', 'NOT IN', '(SELECT id FROM discussions)')
+                ->whereNotIn('discussion_id', $this->database->table('discussions')->select('id'))
                 ->get()
                 ->count()
         );
@@ -164,7 +164,7 @@ class Validation
             $this->database
                 ->table('posts')
                 ->select('user_id')
-                ->where('user_id', 'NOT IN', '(SELECT id FROM users)')
+                ->whereNotIn('user_id', $this->database->table('users')->select('id'))
                 ->get()
                 ->count()
         );
@@ -172,7 +172,7 @@ class Validation
             $this->database
                 ->table('posts')
                 ->select('edited_user_id')
-                ->where('edited_user_id', 'NOT IN', '(SELECT id FROM users)')
+                ->whereNotIn('edited_user_id', $this->database->table('users')->select('id'))
                 ->get()
                 ->count()
         );
@@ -185,7 +185,7 @@ class Validation
             $this->database
                 ->table('post_mentions_user')
                 ->select('post_id')
-                ->where('post_id', 'NOT IN', '(SELECT id FROM posts)')
+                ->whereNotIn('post_id', $this->database->table('posts')->select('id'))
                 ->get()
                 ->count()
         );
@@ -193,7 +193,7 @@ class Validation
             $this->database
                 ->table('post_mentions_user')
                 ->select('mentions_user_id')
-                ->where('mentions_user_id', 'NOT IN', '(SELECT id FROM users)')
+                ->whereNotIn('mentions_user_id', $this->database->table('users')->select('id'))
                 ->get()
                 ->count()
         );
@@ -206,7 +206,7 @@ class Validation
             $this->database
                 ->table('tags')
                 ->select('parent_id')
-                ->where('parent_id', 'NOT IN', '(SELECT id FROM tags)')
+                ->whereNotIn('parent_id', $this->database->table('tags')->select('id'))
                 ->get()
                 ->count()
         );
@@ -214,7 +214,7 @@ class Validation
             $this->database
                 ->table('tags')
                 ->select('last_posted_discussion_id')
-                ->where('last_posted_discussion_id', 'NOT IN', '(SELECT id FROM discussions)')
+                ->whereNotIn('last_posted_discussion_id', $this->database->table('discussions')->select('id'))
                 ->get()
                 ->count()
         );
@@ -222,7 +222,7 @@ class Validation
             $this->database
                 ->table('tags')
                 ->select('last_posted_user_id')
-                ->where('last_posted_user_id', 'NOT IN', '(SELECT id FROM users)')
+                ->whereNotIn('last_posted_user_id', $this->database->table('users')->select('id'))
                 ->get()
                 ->count()
         );
@@ -235,7 +235,7 @@ class Validation
             $this->database
                 ->table('tag_user')
                 ->select('user_id')
-                ->where('user_id', 'NOT IN', '(SELECT id FROM users)')
+                ->whereNotIn('user_id', $this->database->table('users')->select('id'))
                 ->get()
                 ->count()
         );
@@ -243,7 +243,7 @@ class Validation
             $this->database
                 ->table('tag_user')
                 ->select('tag_id')
-                ->where('tag_id', 'NOT IN', '(SELECT id FROM tags)')
+                ->whereNotIn('tag_id', $this->database->table('tags')->select('id'))
                 ->get()
                 ->count()
         );

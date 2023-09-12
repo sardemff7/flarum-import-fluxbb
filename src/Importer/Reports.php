@@ -2,29 +2,25 @@
 
 namespace ArchLinux\ImportFluxBB\Importer;
 
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Capsule\Manager;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Reports
 {
-    private ConnectionInterface $database;
-    private string $fluxBBDatabase;
-    private string $fluxBBPrefix;
+    private Manager $database;
 
-    public function __construct(ConnectionInterface $database)
+    public function __construct(Manager $database)
     {
         $this->database = $database;
     }
 
-    public function execute(OutputInterface $output, string $fluxBBDatabase, string $fluxBBPrefix)
+    public function execute(OutputInterface $output)
     {
-        $this->fluxBBDatabase = $fluxBBDatabase;
-        $this->fluxBBPrefix = $fluxBBPrefix;
         $output->writeln('Importing reports...');
 
-        $reports = $this->database
-            ->table($this->fluxBBDatabase . '.' . $this->fluxBBPrefix . 'reports')
+        $reports = $this->database->connection('fluxbb')
+            ->table('reports')
             ->select(
                 [
                     'id',
@@ -39,7 +35,7 @@ class Reports
                 ]
             )
             ->where('post_id', '!=', 0)
-            ->where('post_id', 'IN', '(SELECT id FROM fluxbb.posts)')
+            ->whereIn('post_id', $this->database->connection('fluxbb')->table('posts')->select('id'))
             ->orderBy('id')
             ->get()
             ->all();

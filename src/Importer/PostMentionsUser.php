@@ -2,15 +2,15 @@
 
 namespace ArchLinux\ImportFluxBB\Importer;
 
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Capsule\Manager;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class PostMentionsUser
 {
-    private ConnectionInterface $database;
+    private Manager $database;
 
-    public function __construct(ConnectionInterface $database)
+    public function __construct(Manager $database)
     {
         $this->database = $database;
     }
@@ -19,14 +19,16 @@ class PostMentionsUser
     {
         $output->writeln('Importing posts mention users...');
 
-        $posts = $this->database
+        $posts = $this->database->connection()
             ->table('posts')
             ->select(['id', 'content'])
             ->where('content', 'LIKE', '%<USERMENTION %')
             ->orderBy('id')
             ->get()
             ->all();
+
         $progressBar = new ProgressBar($output, count($posts));
+
         foreach ($posts as $post) {
             preg_match_all(
                 '#<USERMENTION displayname=".+?" id="([0-9]+)">@.+?</USERMENTION>#',
@@ -34,7 +36,7 @@ class PostMentionsUser
                 $matches
             );
             foreach (array_unique($matches[1]) as $match) {
-                $this->database
+                $this->database->connection()
                     ->table('post_mentions_user')
                     ->insert(
                         [

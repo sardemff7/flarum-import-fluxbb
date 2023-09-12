@@ -115,14 +115,10 @@ class ImportFromFluxBB extends AbstractCommand
         $this->topicSubscriptions->execute($this->output);
         $this->forumSubscriptions->execute($this->output);
         $this->bans->execute($this->output);
+        $this->reports->execute($this->output);
+        $this->postMentionsUser->execute($this->output);
 
-        //
-        // TODO review and update
-        //
-        // $this->reports->execute($this->output, $this->input->getArgument('fluxbb-database'), $this->input->getArgument('fluxbb-prefix'));
-        // $this->postMentionsUser->execute($this->output);
-//
-        // $this->validation->execute($this->output);
+        $this->validation->execute($this->output);
     }
 
     protected function checkRequiredExtension() {
