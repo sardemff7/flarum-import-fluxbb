@@ -34,6 +34,8 @@ class Posts
 
         $output->writeln('Importing posts...');
 
+        $arr_topic_id = $this->database->connection()->table('discussions')->pluck('id')->toArray();
+
         $posts = $this->database->connection('fluxbb')
             ->table('posts')
             ->select(
@@ -53,6 +55,7 @@ class Posts
             )
             ->orderBy('topic_id')
             ->orderBy('id')
+            ->whereIn('topic_id', $arr_topic_id)
             ->get()
             ->all();
 

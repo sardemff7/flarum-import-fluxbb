@@ -55,9 +55,9 @@ class Topics
             $numberOfPosts = $topic->num_replies + 1;
             $tagIds = [$this->getParentTagId($topic->forum_id), $topic->forum_id];
 
-            if ($this->replaceSolvedHintByTag($topic->subject)) {
-                $tagIds[] = $solvedTagId;
-            }
+            // if ($this->replaceSolvedHintByTag($topic->subject)) {
+                // $tagIds[] = $solvedTagId;
+            // }
 
             $this->database
                 ->table('discussions')
