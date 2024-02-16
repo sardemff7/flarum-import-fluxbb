@@ -3,7 +3,10 @@
 namespace ArchLinux\ImportFluxBB\Importer;
 
 use Flarum\Foundation\Paths;
+use Flarum\User\AvatarUploader;
 use Illuminate\Database\Capsule\Manager;
+use Illuminate\Contracts\Filesystem\Factory;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManagerStatic as Image;
 use Psr\Container\ContainerInterface;
@@ -16,10 +19,11 @@ class Avatars
     private ContainerInterface $container;
     private String $avatarsDir;
 
-    public function __construct(Manager $database, ContainerInterface $container)
+    public function __construct(Manager $database, ContainerInterface $container, Factory $filesystemFactory)
     {
         $this->database = $database;
         $this->container = $container;
+        $this->uploadDir = $filesystemFactory->disk('flarum-avatars');
     }
 
     public function execute(OutputInterface $output, $avatarsDir)
@@ -63,30 +67,13 @@ class Avatars
         $avatarFile = $avatarFile[0];
 
         $newFileName = Str::random() . '.png';
-        $newDir = $this->container[Paths::class]->public . '/assets/avatars';
-		if (!is_dir($newDir)) {
-			mkdir($newDir);
-		}
-        $newPath = $newDir . '/' . $newFileName;
-        if (file_exists($newPath)) {
-            throw new \RuntimeException('Avatar already exists: ' . $newFileName);
-        }
 
         Image::configure(['driver' => 'imagick']);
         $image = Image::make($avatarFile);
-        if (!Str::endsWith($avatarFile, '.png')
-            || $image->getWidth() !== $image->getHeight()
-            || $image->getWidth() > 100) {
-            $newSize = max($image->getWidth(), $image->getHeight());
-            if ($newSize > 100) {
-                $newSize = 100;
-            }
-            $encodedImage = $image->orientate()->fit($newSize, $newSize)->encode('png');
-            file_put_contents($newPath, $encodedImage);
-        } else {
-            copy($avatarFile, $newPath);
+        if (extension_loaded('exif')) {
+            $image->orientate();
         }
-        system('optipng -o 5 -strip all -snip -quiet ' . $newPath);
+        $this->uploadDir->put($newFileName, $image->fit(100, 100)->encode('png'));
 
         return $newFileName;
     }

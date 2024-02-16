@@ -20,6 +20,7 @@ use Flarum\Console\AbstractCommand;
 use Flarum\Extension\ExtensionManager;
 use Symfony\Component\Console\Input\InputArgument;
 use Illuminate\Database\Capsule\Manager;
+use Illuminate\Contracts\Filesystem\Factory;
 
 class ImportFromFluxBB extends AbstractCommand
 {
@@ -39,6 +40,7 @@ class ImportFromFluxBB extends AbstractCommand
     private Validation $validation;
     private ExtensionManager $extensionManager;
     private Manager $DBmanager;
+    private Factory $filesystemFactory;
     protected String $avatarsDir;
 
     public function __construct(
@@ -57,7 +59,8 @@ class ImportFromFluxBB extends AbstractCommand
         InitialCleanup $initialCleanup,
         Validation $validation,
         ExtensionManager $extensionManager,
-        Manager $DBmanager
+        Manager $DBmanager,
+        Factory $filesystemFactory
     ) {
         $this->users = $users;
         $this->categories = $categories;
@@ -75,6 +78,7 @@ class ImportFromFluxBB extends AbstractCommand
         $this->validation = $validation;
         $this->extensionManager = $extensionManager;
         $this->DBmanager = $DBmanager;
+        $this->filesystemFactory = $filesystemFactory;
         parent::__construct();
     }
 
@@ -103,7 +107,7 @@ class ImportFromFluxBB extends AbstractCommand
 
         // Import users, groups AND Avatars
         $this->users->execute($this->output);
-        $this->avatars->execute($this->output, $this->avatarsDir);
+        $this->avatars->execute($this->output, $this->avatarsDir, $this->filesystemFactory);
         $this->groups->execute($this->output);
 
         // Start import the Forum
