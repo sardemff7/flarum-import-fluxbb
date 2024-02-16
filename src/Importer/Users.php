@@ -6,7 +6,6 @@ use Illuminate\Database\Capsule\Manager;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
-use s9e\TextFormatter\Bundles\Forum as TextFormatter;
 
 class Users
 {
@@ -28,7 +27,6 @@ class Users
                     'id',
                     'group_id',
                     'username',
-                    'moto',
                     'password',
                     'email',
                     'title',
@@ -78,9 +76,6 @@ class Users
 
         foreach ($users as $user) {
             $lastSeenAt = (new \DateTime())->setTimestamp($user->last_visit);
-            if (!is_null($user->moto) AND strlen($user->moto) >=2 ) {
-                $user->signature =  TextFormatter::parse($user->signature . "\n[b]Moto principale:[/b] " . $user->moto);
-            }
             $this->database
                 ->table('users')
                 ->insert(
