@@ -1,5 +1,5 @@
 {
-    "name": "marionline/flarum-import-fluxbb",
+    "name": "sardemff7/flarum-import-fluxbb",
     "description": "Import FluxBB data to Flarum",
     "license": "GPL-3.0-or-later",
     "type": "flarum-extension",
