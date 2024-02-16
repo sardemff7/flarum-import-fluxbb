@@ -1,8 +1,9 @@
 ## FluxBB Importer
 
-This [Flarum](https://flarum.org/) extension is specific for TheRoyals.it forum (https://www.theroyals.it/forum/).
+This [Flarum](https://flarum.org/) extension should be pretty generic but is based on the one for for TheRoyals.it forum (https://www.theroyals.it/forum/).
 You might find its code useful to implement your own solution.
-It is based on work of flarum-import-fluxbb of ArchLinux Community and Fedora-Fr.org suggestions of llaumgui.
+It is based on Mario Santagiuliana’s fork of the flarum-import-fluxbb from the ArchLinux Community, with Fedora-Fr.org suggestions of llaumgui.
+I added Filesystem abstraction support for the avatars migration, to support a Flarum installation storing them in e.g. an S3-compatible service.
 
 ### Need to know before migration
 - You need a fresh Flarum installation. This Importer will remove all previus data (tags, users, discussions, avatar, etc.) inserted in your flarum website.
@@ -13,14 +14,17 @@ It is based on work of flarum-import-fluxbb of ArchLinux Community and Fedora-Fr
 ### Installation
 
 ```sh
-composer require archlinux-de/flarum-import-fluxbb
+composer require --dev sardemff7/flarum-import-fluxbb "*@dev"
 ```
-And activate the extension.
+And activate the extension once your Flarum installation done.
+```sh
+php flarum extension:enable sardemff7-import-fluxbb
+```
 
 ### Usage
 
 ```sh
-./flarum app:import-from-fluxbb  [<fluxbb-directory>]
+./flarum app:import-from-fluxbb [<fluxbb-directory>]
 ```
 
-Remeber, in fluxbb-directory must be a config.php with the correct information to connect to the fluxbb database.
+Remember, in fluxbb-directory must be a config.php with the correct information to connect to the fluxbb database.
